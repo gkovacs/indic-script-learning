@@ -1,0 +1,17 @@
+{
+  "name": "scriptlearn",
+  "main": "index.js",
+  "version": "1.0.0",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery.jadedom": "https://raw.githubusercontent.com/robertmesserle/jadeDom/master/jquery.jadedom.js",
+    "jquery": "~2.1.4"
+  }
+}
