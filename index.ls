@@ -44,6 +44,8 @@ get_next_letter = ->
 addLetter = (letter) ->
   #console.log letter
   if letter != get_next_letter()
+    hide_all_letters()
+    show_word_and_distractors()
     return
   root.current_word.push letter
   partial_word = root.current_word.join('')
@@ -55,15 +57,42 @@ addLetter = (letter) ->
   , 600
   highlight_next()
 
-highlight_next = ->
-  next_letter = get_next_letter()
-  if not next_letter?
-    switch_word()
-    return
+hide_all_letters = ->
+  for x in $('.button')
+    #$(x).text ''
+    $(x).css 'visibility', 'hidden'
+
+show_letter = (letter) ->
+  button = $('#let' + letter)
+  #button.text button.attr('txt')
+  button.css 'visibility', 'visible'
+
+get_distractor = (orig_letter) ->
+  letters = Object.keys root.letter_frequencies
+  while true
+    letter_idx = Math.random() * letters.length |> Math.floor
+    letter = letters[letter_idx]
+    if letter != orig_letter
+      return letter
+
+highlight_letter = (letter) ->
   $('.highlighted').removeClass('highlighted')
   $('#let' + next_letter).addClass('highlighted')
 
+show_word_and_distractors = ->
+  next_letter = get_next_letter()
+  #hide_all_letters()
+  if not next_letter?
+    switch_word()
+    return
+  show_letter next_letter
+  show_letter get_distractor(next_letter)
+
+highlight_next = ->
+  show_word_and_distractors()
+
 new_word = ->
+  hide_all_letters()
   console.log 'new word!'
   word = pick_word()
   #console.log Object.keys letter_frequencies
@@ -71,10 +100,37 @@ new_word = ->
   letters = (letters.sort (a, b) ->
     letter_frequencies[a] - letter_frequencies[b]).reverse()
   #console.log letters
-  for let letter in letters
-    $('#keyboard').append J('.button').text(letter).attr('id', 'let' + letter).click ->
-      addLetter letter
   highlight_next()
+
+strip_comments = (line) ->
+  hash_idx = line.indexOf '#'
+  if hash_idx == -1
+    return line
+  return line.substring 0, hash_idx
+
+split_by_space = (line) ->
+  return line.split(' ').filter((c) -> c != ' ' and c != '')
+
+get_letters = ->
+  return root.hindi_letters
+
+add_line_of_letters = (letters) ->
+  curline = J('.keyline')
+  for let letter in letters
+    curline.append J('.button').text(letter).attr('txt', letter).attr('id', 'let' + letter).click ->
+      addLetter letter
+  $('#keyboard').append curline
+
+create_keyboard = (callback) ->
+  $.get '/inscript_keyboard.txt', (data) ->
+    lines = data.split('\n')
+    lines = lines.map strip_comments
+    root.hindi_letters = []
+    for line in lines
+      letters = split_by_space line
+      root.hindi_letters = root.hindi_letters ++ letters
+      add_line_of_letters letters
+    callback()
 
 $(document).ready ->
   #$('#content').text 'hello world 2'
@@ -89,28 +145,29 @@ $(document).ready ->
   */
 
   #$.get '/english_to_hindi_basic.json', (english_to_hindi) ->
-  $.get '/english_to_hindi.json', (english_to_hindi) ->
-    #console.log english_to_hindi
-    root.english_to_hindi = english_to_hindi
-    root.hindi_words = hindi_words = []
-    root.english_words = english_words = []
-    root.letter_frequencies = letter_frequencies = {}
-    root.hindi_to_english = hindi_to_english = {}
-    for english,hindi of english_to_hindi
-      skip_word = false
-      for letter in hindi
-        if banned_letters.hindi.indexOf(letter) != -1
-          skip_word = true
-      if skip_word
-        continue
-      english_words.push english
-      hindi_words.push hindi
-      for letter in hindi
-        if not letter_frequencies[letter]?
-          letter_frequencies[letter] = 0
-        letter_frequencies[letter] += 1
-      hindi_to_english[hindi] = english
-    set_target_word 'हिन्दी'
-    new_word()
-  #for letter in alphabets.latin
-    #$('#content').append J('.button').text letter
+  create_keyboard ->
+    $.get '/english_to_hindi.json', (english_to_hindi) ->
+      #console.log english_to_hindi
+      root.english_to_hindi = english_to_hindi
+      root.hindi_words = hindi_words = []
+      root.english_words = english_words = []
+      root.letter_frequencies = letter_frequencies = {}
+      root.hindi_to_english = hindi_to_english = {}
+      for english,hindi of english_to_hindi
+        skip_word = false
+        for letter in hindi
+          if banned_letters.hindi.indexOf(letter) != -1
+            skip_word = true
+        if skip_word
+          continue
+        english_words.push english
+        hindi_words.push hindi
+        for letter in hindi
+          if not letter_frequencies[letter]?
+            letter_frequencies[letter] = 0
+          letter_frequencies[letter] += 1
+        hindi_to_english[hindi] = english
+      set_target_word 'हिन्दी'
+      new_word()_
+    #for letter in alphabets.latin
+      #$('#content').append J('.button').text letter
