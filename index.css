@@ -1,8 +1,28 @@
 .button {
   display: inline-block;
-  font-size: 30px;
+  font-size: 42px;
   padding: 5px;
   margin: 5px;
   border-radius: 10px;
   border: 1px solid black;
+  cursor: pointer;
+}
+
+#english_translation {
+  font-size: 42px;
+  height: 50px;
+}
+
+#topword {
+  font-size: 64px;
+  height: 100px;
+}
+
+#inputarea {
+  font-size: 64px;
+  height: 100px;
+}
+
+.highlighted {
+  background-color: yellow;
 }

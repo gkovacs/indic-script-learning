@@ -12,6 +12,7 @@
   ],
   "dependencies": {
     "jquery.jadedom": "https://raw.githubusercontent.com/robertmesserle/jadeDom/master/jquery.jadedom.js",
-    "jquery": "~2.1.4"
+    "jquery": "~2.1.4",
+    "js-yaml": "~3.3.1"
   }
 }

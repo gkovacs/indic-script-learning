@@ -21,6 +21,8 @@ for word in basic_english.split('\n')
       continue
     if hindi.indexOf('[') != -1
       continue
+    if hindi.indexOf('-') != -1
+      continue
     english_to_hindi_basic[word] = hindi
 
 fs.writeFileSync 'english_to_hindi_basic.yaml', js-yaml.safeDump(english_to_hindi_basic)
