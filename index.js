@@ -30,7 +30,7 @@
     $('#topword').text(root.target_word);
     root.current_word = [];
     $('#inputarea').text('');
-    return $('#english_translation').text(root.hindi_to_english[target_word]);
+    return $('#english_translation').text('(word meaning: ' + root.hindi_to_english[target_word] + ')');
   };
   switch_word = function(){
     set_target_word(pick_word());
@@ -201,9 +201,11 @@
             }
             letter_frequencies[letter] += 1;
           }
-          hindi_to_english[hindi] = english;
+          if (hindi_to_english[hindi] == null) {
+            hindi_to_english[hindi] = english;
+          }
         }
-        set_target_word('हिन्दी');
+        set_target_word('बिल्ली');
         return new_word()._;
       });
     });

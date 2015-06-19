@@ -24,7 +24,7 @@ set_target_word = (target_word) ->
   $('#topword').text root.target_word
   root.current_word = []
   $('#inputarea').text ''
-  $('#english_translation').text root.hindi_to_english[target_word]
+  $('#english_translation').text '(word meaning: ' + root.hindi_to_english[target_word] + ')'
 
 switch_word = ->
   set_target_word pick_word()
@@ -166,8 +166,10 @@ $(document).ready ->
           if not letter_frequencies[letter]?
             letter_frequencies[letter] = 0
           letter_frequencies[letter] += 1
-        hindi_to_english[hindi] = english
-      set_target_word 'हिन्दी'
+        if not hindi_to_english[hindi]?
+          hindi_to_english[hindi] = english
+      #set_target_word 'हिन्दी'
+      set_target_word 'बिल्ली'
       new_word()_
     #for letter in alphabets.latin
       #$('#content').append J('.button').text letter
