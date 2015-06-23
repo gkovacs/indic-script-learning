@@ -120,7 +120,7 @@
       synthesize_word(letter);
       setTimeout(function(){
         return highlight_letter(get_next_letter());
-      }, 600);
+      }, 800);
       return;
     }
     synthesize_word(letter);
@@ -131,7 +131,7 @@
     if (partial_word !== letter) {
       setTimeout(function(){
         return synthesize_word(partial_word);
-      }, 600);
+      }, 800);
     }
     return highlight_next();
   };

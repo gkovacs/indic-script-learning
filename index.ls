@@ -104,7 +104,7 @@ addLetter = (letter) ->
     synthesize_word letter
     setTimeout ->
       highlight_letter get_next_letter()
-    , 600
+    , 800
     return
   synthesize_word letter
   root.current_word.push letter
@@ -114,7 +114,7 @@ addLetter = (letter) ->
   if partial_word != letter
     setTimeout ->
       synthesize_word partial_word
-    , 600
+    , 800
   highlight_next()
 
 hide_all_letters = ->
