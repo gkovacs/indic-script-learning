@@ -6,35 +6,88 @@ alphabets = {
   latin: ([\a to \z] ++ [\A to \Z]).join('')
 }
 
+aux_letters = {
+  hindi: <[ ौ ै ा ी ू ो े ् ि ु ॆ ं ँ ॊ ृ ॉ ॅ ्र र् ज्ञ त्र क्ष श्र ः ]>
+}
+
 banned_letters = {
   hindi: [\a to \z] ++ [\A to \Z] ++ [\0 to \9] ++ <[ . , / - _ ? , . ^ ( ) : [ ] ' " { } ~ ` ]>
 }
 
+export playword = ->
+  synthesize_word root.target_word
+
 synthesize_word = (word) ->
+  if root.lang == 'hi' and aux_letters.hindi.indexOf(word) != -1
+    word = root.current_word[*-1] + word
   video_tag = $('video')
   if video_tag.length == 0
     video_tag = J('video').css({display: 'none'})
     $('body').append video_tag
-  video_tag.attr 'src', 'http://speechsynth.herokuapp.com/speechsynth?' + $.param({lang: 'hi', word})
+  video_tag.attr 'src', 'http://speechsynth.herokuapp.com/speechsynth?' + $.param({lang: root.lang, word})
   video_tag[0].currentTime = 0
   video_tag[0].play()
 
+root.mistake_made = false
+
 set_target_word = (target_word) ->
+  english_word = target_word
+  root.mistake_made = false
+  if root.lang == 'hi'
+    english_word = root.hindi_to_english[target_word]
   root.target_word = target_word
-  $('#topword').text root.target_word
   root.current_word = []
   $('#inputarea').text ''
-  $('#english_translation').text '(word meaning: ' + root.hindi_to_english[target_word] + ')'
+  $('#topword').css 'color', 'white'
+  $.get '/image?' + $.param({name: english_word}), (data) ->
+    $('#topword').text root.target_word
+    $('#topword').css 'color', 'black'
+    $('#english_translation').text '(word meaning: ' + root.hindi_to_english[target_word] + ')'
+    #$('#english_translation').text '(picture goes here)'
+    #console.log data
+    $('#imgdisplay').attr 'src', data
+    setTimeout ->
+      synthesize_word target_word
+    , 100
+
+word_finished = (finished_word) ->
+  if can_spell_word(finished_word)
+    if not root.mistake_made
+      root.learned_words[finished_word] = true
+  for letter in finished_word
+    root.letters_practiced[letter] = true
+
+can_spell_word = (word) ->
+  output = true
+  for letter in word
+    if not root.letters_practiced[letter]?
+      output = false
+  return output
 
 switch_word = ->
-  set_target_word pick_word()
-  highlight_next()
+  word_finished root.target_word
+  setTimeout ->
+    set_target_word pick_word()
+    if can_spell_word(root.target_word)
+      $('#topword').css('visibility', 'hidden')
+    else
+      $('#topword').css('visibility', 'visible')
+    highlight_next()
+  , 1000
+
+#pick_word = ->
+#  word_idx = Math.random() * root.all_words.length |> Math.floor
+#  return root.all_words[word_idx]
+
+root.learned_words = {}
 
 pick_word = ->
-  word_idx = Math.random() * root.hindi_words.length |> Math.floor
-  return root.hindi_words[word_idx]
+  for word in get_words_by_easiness()
+    if not root.learned_words[word]?
+      return word
 
 root.current_word = []
+root.letters_practiced = {}
 
 get_next_letter = ->
   num_typed = root.current_word.length
@@ -44,17 +97,24 @@ get_next_letter = ->
 addLetter = (letter) ->
   #console.log letter
   if letter != get_next_letter()
-    hide_all_letters()
-    show_word_and_distractors()
+  #  hide_all_letters()
+  #  show_word_and_distractors()
+    root.mistake_made = true
+    $('#topword').css('visibility', 'visible')
+    synthesize_word letter
+    setTimeout ->
+      highlight_letter get_next_letter()
+    , 600
     return
+  synthesize_word letter
   root.current_word.push letter
   partial_word = root.current_word.join('')
   $('#inputarea').text partial_word
   console.log partial_word
-  synthesize_word letter
-  setTimeout ->
-    synthesize_word partial_word
-  , 600
+  if partial_word != letter
+    setTimeout ->
+      synthesize_word partial_word
+    , 600
   highlight_next()
 
 hide_all_letters = ->
@@ -68,16 +128,20 @@ show_letter = (letter) ->
   button.css 'visibility', 'visible'
 
 get_distractor = (orig_letter) ->
-  letters = Object.keys root.letter_frequencies
+  #letters = Object.keys root.letter_frequencies
+  letters = root.letters
   while true
     letter_idx = Math.random() * letters.length |> Math.floor
     letter = letters[letter_idx]
     if letter != orig_letter
       return letter
 
-highlight_letter = (letter) ->
+unhighlight_letters = ->
   $('.highlighted').removeClass('highlighted')
-  $('#let' + next_letter).addClass('highlighted')
+
+highlight_letter = (letter) ->
+  unhighlight_letters()
+  $('#let' + letter).addClass('highlighted')
 
 show_word_and_distractors = ->
   next_letter = get_next_letter()
@@ -86,7 +150,10 @@ show_word_and_distractors = ->
     switch_word()
     return
   show_letter next_letter
-  show_letter get_distractor(next_letter)
+  unhighlight_letters()
+  if not root.letters_practiced[next_letter]?
+    highlight_letter next_letter
+  #show_letter get_distractor(next_letter)
 
 highlight_next = ->
   show_word_and_distractors()
@@ -96,9 +163,9 @@ new_word = ->
   console.log 'new word!'
   word = pick_word()
   #console.log Object.keys letter_frequencies
-  letters = Object.keys letter_frequencies
-  letters = (letters.sort (a, b) ->
-    letter_frequencies[a] - letter_frequencies[b]).reverse()
+  #letters = Object.keys letter_frequencies
+  #letters = (letters.sort (a, b) ->
+  #  letter_frequencies[a] - letter_frequencies[b]).reverse()
   #console.log letters
   highlight_next()
 
@@ -112,7 +179,8 @@ split_by_space = (line) ->
   return line.split(' ').filter((c) -> c != ' ' and c != '')
 
 get_letters = ->
-  return root.hindi_letters
+  #return root.hindi_letters
+  return root.letters
 
 add_line_of_letters = (letters) ->
   curline = J('.keyline')
@@ -121,16 +189,39 @@ add_line_of_letters = (letters) ->
       addLetter letter
   $('#keyboard').append curline
 
+root.lang = 'hi'
+#root.lang = 'en'
+
 create_keyboard = (callback) ->
-  $.get '/inscript_keyboard.txt', (data) ->
+  #$.get '/inscript_keyboard.txt', (data) ->
+  keyboard_file = '/inscript_keyboard.txt'
+  if root.lang == 'en'
+    keyboard_file = '/qwerty_keyboard.txt'
+  $.get keyboard_file, (data) ->
     lines = data.split('\n')
     lines = lines.map strip_comments
-    root.hindi_letters = []
+    #root.hindi_letters = []
+    root.letters = []
     for line in lines
       letters = split_by_space line
-      root.hindi_letters = root.hindi_letters ++ letters
+      #root.hindi_letters = root.hindi_letters ++ letters
+      root.letters = root.letters ++ letters
       add_line_of_letters letters
     callback()
+
+get_hardness = (word) ->
+  hardness = 0
+  new_letters = {}
+  for letter in word
+    if not root.letters_practiced[letter]? and not new_letters[letter]?
+      hardness += 1
+      new_letters[letter] = true
+  return hardness
+
+get_words_by_easiness = ->
+  words_by_easiness = root.all_words.sort (a, b) ->
+    return get_hardness(a) - get_hardness(b)
+  return words_by_easiness
 
 $(document).ready ->
   #$('#content').text 'hello world 2'
@@ -146,22 +237,31 @@ $(document).ready ->
 
   #$.get '/english_to_hindi_basic.json', (english_to_hindi) ->
   create_keyboard ->
-    $.get '/english_to_hindi.json', (english_to_hindi) ->
+    #$.get '/english_to_hindi.json', (english_to_hindi) ->
+    $.get '/english_to_hindi_basic.json', (english_to_hindi) ->
       #console.log english_to_hindi
       root.english_to_hindi = english_to_hindi
-      root.hindi_words = hindi_words = []
-      root.english_words = english_words = []
+      #root.hindi_words = hindi_words = []
+      #root.english_words = english_words = []
+      root.all_words = all_words = []
       root.letter_frequencies = letter_frequencies = {}
       root.hindi_to_english = hindi_to_english = {}
       for english,hindi of english_to_hindi
         skip_word = false
-        for letter in hindi
-          if banned_letters.hindi.indexOf(letter) != -1
-            skip_word = true
-        if skip_word
-          continue
-        english_words.push english
-        hindi_words.push hindi
+        if root.lang == 'hi'
+          for letter in hindi
+            if root.letters.indexOf(letter) == -1
+              skip_word = true
+            #if banned_letters.hindi.indexOf(letter) != -1
+            #  skip_word = true
+          if skip_word
+            continue
+        #english_words.push english
+        #hindi_words.push hindi
+        if root.lang == 'hi'
+          all_words.push hindi
+        else
+          all_words.push english
         for letter in hindi
           if not letter_frequencies[letter]?
             letter_frequencies[letter] = 0
@@ -169,7 +269,11 @@ $(document).ready ->
         if not hindi_to_english[hindi]?
           hindi_to_english[hindi] = english
       #set_target_word 'हिन्दी'
-      set_target_word 'बिल्ली'
-      new_word()_
+      if root.lang == 'hi'
+        #set_target_word 'बिल्ली'
+        set_target_word pick_word()
+      else
+        set_target_word 'cat'
+      new_word()
     #for letter in alphabets.latin
       #$('#content').append J('.button').text letter

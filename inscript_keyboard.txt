@@ -3,6 +3,6 @@
 ॆ ं म न व ल स य # zxcvb
 औ ऐ आ ई ऊ भ ङ घ ध झ ढ ञ # shift QWERTY
 ओ ए अ इ उ फ ऱ ख थ छ ठ # shift ASDFG
-ऎ  ँ ण ऩ ऴ ळ श ष । य़ # shift ZXCVB
-ॊ  ृ  ॉ # ` = \
+ऎ ँ ण ऩ ऴ ळ श ष । य़ # shift ZXCVB
+ॊ ृ ॉ # ` = \
 ऒ ऍ ॅ ्र र् ज्ञ त्र क्ष श्र ः ऋ ऑ # shift ~!@#$%

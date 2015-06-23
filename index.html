@@ -1,18 +1,19 @@
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="index.css">
-<link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/bootstrap-theme.min.css">
+<link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
 <script src="bower_components/jquery/dist/jquery.min.js"></script>
 <script src="bower_components/jquery.jadedom/index.js"></script>
 <script src="bower_components/js-yaml/dist/js-yaml.min.js"></script>
-<script src="bower_components/bootstrap/dist/bootstrap.min.js"></script>
+<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="index.js"></script>
 </head>
 <body>
+<img id="imgdisplay" style="width: 200px; height: 200px"></img>
 <div id="english_translation"></div>
-<div><span id="topword"> </span><!--<span style="margin-left: 20px">Play Audio</span></div>-->
-<div id="inputarea"></div>
+<div><span class="glyphicon glyphicon-volume-up" style="font-size: 60px; margin-left: 5px; margin-right: 20px; cursor: pointer" onclick="playword()"></span><span id="topword"> </span></div>
+<div style="margin-left: 85px" id="inputarea"></div>
 <div id="keyboard"></div>
 <!--
 <div id="button1" class="bigbutton"></div>
