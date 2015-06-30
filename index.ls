@@ -18,13 +18,20 @@ export playword = ->
   synthesize_word root.target_word
 
 synthesize_word = (word) ->
+  synth_lang = root.lang
+  if synth_lang == 'ipa'
+    synth_lang = 'en'
   if root.lang == 'hi' and aux_letters.hindi.indexOf(word) != -1
     word = root.current_word[*-1] + word
+  if root.lang == 'ipa'
+    word = root.hindi_to_english[word]
+    if not word?
+      return
   video_tag = $('video')
   if video_tag.length == 0
     video_tag = J('video').css({display: 'none'})
     $('body').append video_tag
-  video_tag.attr 'src', 'http://speechsynth.herokuapp.com/speechsynth?' + $.param({lang: root.lang, word})
+  video_tag.attr 'src', 'http://speechsynth.herokuapp.com/speechsynth?' + $.param({lang: synth_lang, word})
   video_tag[0].currentTime = 0
   video_tag[0].play()
 
@@ -33,7 +40,7 @@ root.mistake_made = false
 set_target_word = (target_word) ->
   english_word = target_word
   root.mistake_made = false
-  if root.lang == 'hi'
+  if root.lang == 'hi' or root.lang == 'ipa'
     english_word = root.hindi_to_english[target_word]
   root.target_word = target_word
   root.current_word = []
@@ -42,7 +49,8 @@ set_target_word = (target_word) ->
   $.get '/image?' + $.param({name: english_word}), (data) ->
     $('#topword').text root.target_word
     $('#topword').css 'color', 'black'
-    $('#english_translation').text '(word meaning: ' + root.hindi_to_english[target_word] + ')'
+    if root.lang == 'hi'
+      $('#english_translation').text '(word meaning: ' + root.hindi_to_english[target_word] + ')'
     #$('#english_translation').text '(picture goes here)'
     #console.log data
     $('#imgdisplay').attr 'src', data
@@ -189,14 +197,56 @@ add_line_of_letters = (letters) ->
       addLetter letter
   $('#keyboard').append curline
 
-root.lang = 'hi'
-#root.lang = 'en'
+#root.lang = 'hi'
+root.lang = 'en'
+#root.lang = 'ipa'
+
+export getIPA = (word) ->
+  ipa = ipadict_en[word.trim().toLowerCase()]
+  if not ipa?
+    if word.indexOf('-') != -1
+      return [getIPA(x) for x in word.split('-')].join('-')
+    return word
+  return ipa
+
+export getUrlParameters = ->
+  url = window.location.href
+  hash = url.lastIndexOf('#')
+  if hash != -1
+    url = url.slice(0, hash)
+  map = {}
+  parts = url.replace(/[?&]+([^=&]+)=([^&]*)/gi, (m,key,value) ->
+    #map[key] = decodeURI(value).split('+').join(' ').split('%2C').join(',') # for whatever reason this seems necessary?
+    map[key] = decodeURIComponent(value).split('+').join(' ') # for whatever reason this seems necessary?
+  )
+  return map
+
+create_keyboard_ipa = (callback) ->
+  ipadict_file = '/ipadict_en.json'
+  if root.condition == '1'
+    ipadict_file = '/ipadict_en_obf1.json'
+  if root.condition == '2'
+    ipadict_file = '/ipadict_en_obf2.json'
+  $.getJSON ipadict_file, (data) ->
+    root.ipadict_en = data
+    root.letters = []
+    letter_set = {}
+    for k,v of data
+      for letter in v
+        if not letter_set[letter]?
+          root.letters.push letter
+          letter_set[letter] = true
+    add_line_of_letters root.letters
+    callback()
+
 
 create_keyboard = (callback) ->
   #$.get '/inscript_keyboard.txt', (data) ->
   keyboard_file = '/inscript_keyboard.txt'
   if root.lang == 'en'
     keyboard_file = '/qwerty_keyboard.txt'
+  if root.lang == 'ipa'
+    return create_keyboard_ipa(callback)
   $.get keyboard_file, (data) ->
     lines = data.split('\n')
     lines = lines.map strip_comments
@@ -223,7 +273,18 @@ get_words_by_easiness = ->
     return get_hardness(a) - get_hardness(b)
   return words_by_easiness
 
+root.condition = 0
+
 $(document).ready ->
+  params = getUrlParameters()
+  if params.lang?
+    root.lang = params.lang
+    if params.lang == 'ipa1'
+      root.lang = 'ipa'
+      root.condition = '1'
+    if params.lang == 'ipa2'
+      root.lang = 'ipa'
+      root.condition = '2'
   #$('#content').text 'hello world 2'
   #console.log 'foobar'
   /*
@@ -247,8 +308,10 @@ $(document).ready ->
       root.letter_frequencies = letter_frequencies = {}
       root.hindi_to_english = hindi_to_english = {}
       for english,hindi of english_to_hindi
+        if root.lang == 'ipa'
+          hindi = getIPA(english)
         skip_word = false
-        if root.lang == 'hi'
+        if root.lang == 'hi' or root.lang == 'ipa'
           for letter in hindi
             if root.letters.indexOf(letter) == -1
               skip_word = true
@@ -258,7 +321,7 @@ $(document).ready ->
             continue
         #english_words.push english
         #hindi_words.push hindi
-        if root.lang == 'hi'
+        if root.lang == 'hi' or root.lang == 'ipa'
           all_words.push hindi
         else
           all_words.push english
@@ -273,7 +336,9 @@ $(document).ready ->
         #set_target_word 'बिल्ली'
         set_target_word pick_word()
       else
-        set_target_word 'cat'
+        set_target_word pick_word()
+      #else
+      #  set_target_word 'cat'
       new_word()
     #for letter in alphabets.latin
       #$('#content').append J('.button').text letter
