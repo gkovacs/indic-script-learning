@@ -107,7 +107,11 @@
   };
   root.learned_words = {};
   pick_word = function(){
-    var i$, ref$, len$, word;
+    var params, i$, ref$, len$, word;
+    params = getUrlParameters();
+    if (params.word != null) {
+      return params.word;
+    }
     for (i$ = 0, len$ = (ref$ = get_words_by_easiness()).length; i$ < len$; ++i$) {
       word = ref$[i$];
       if (root.learned_words[word] == null) {

@@ -89,6 +89,9 @@ switch_word = ->
 root.learned_words = {}
 
 pick_word = ->
+  params = getUrlParameters()
+  if params.word?
+    return params.word
   for word in get_words_by_easiness()
     if not root.learned_words[word]?
       return word
