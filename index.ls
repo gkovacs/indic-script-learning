@@ -66,11 +66,10 @@ word_finished = (finished_word) ->
     root.letters_practiced[letter] = true
 
 can_spell_word = (word) ->
-  output = true
   for letter in word
     if not root.letters_practiced[letter]?
-      output = false
-  return output
+      return false
+  return true
 
 switch_word = ->
   word_finished root.target_word
@@ -169,7 +168,7 @@ highlight_next = ->
 new_word = ->
   hide_all_letters()
   console.log 'new word!'
-  word = pick_word()
+  #word = pick_word()
   #console.log Object.keys letter_frequencies
   #letters = Object.keys letter_frequencies
   #letters = (letters.sort (a, b) ->
@@ -310,6 +309,8 @@ $(document).ready ->
       for english,hindi of english_to_hindi
         if root.lang == 'ipa'
           hindi = getIPA(english)
+        if root.lang == 'en'
+          hindi = english
         skip_word = false
         if root.lang == 'hi' or root.lang == 'ipa'
           for letter in hindi
@@ -332,7 +333,9 @@ $(document).ready ->
         if not hindi_to_english[hindi]?
           hindi_to_english[hindi] = english
       #set_target_word 'हिन्दी'
-      if root.lang == 'hi'
+      if params.word?
+        set_target_word params.word
+      else if root.lang == 'hi'
         #set_target_word 'बिल्ली'
         set_target_word pick_word()
       else

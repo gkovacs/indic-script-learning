@@ -84,15 +84,14 @@
     return results$;
   };
   can_spell_word = function(word){
-    var output, i$, len$, letter;
-    output = true;
+    var i$, len$, letter;
     for (i$ = 0, len$ = word.length; i$ < len$; ++i$) {
       letter = word[i$];
       if (root.letters_practiced[letter] == null) {
-        output = false;
+        return false;
       }
     }
-    return output;
+    return true;
   };
   switch_word = function(){
     word_finished(root.target_word);
@@ -196,10 +195,8 @@
     return show_word_and_distractors();
   };
   new_word = function(){
-    var word;
     hide_all_letters();
     console.log('new word!');
-    word = pick_word();
     return highlight_next();
   };
   strip_comments = function(line){
@@ -369,6 +366,9 @@
           if (root.lang === 'ipa') {
             hindi = getIPA(english);
           }
+          if (root.lang === 'en') {
+            hindi = english;
+          }
           skip_word = false;
           if (root.lang === 'hi' || root.lang === 'ipa') {
             for (i$ = 0, len$ = hindi.length; i$ < len$; ++i$) {
@@ -397,7 +397,9 @@
             hindi_to_english[hindi] = english;
           }
         }
-        if (root.lang === 'hi') {
+        if (params.word != null) {
+          set_target_word(params.word);
+        } else if (root.lang === 'hi') {
           set_target_word(pick_word());
         } else {
           set_target_word(pick_word());
